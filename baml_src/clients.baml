@@ -40,7 +40,7 @@ client<llm> CustomAI {
   options {
     base_url "https://api.groq.com/openai/v1"
     api_key env.GROQ_API_KEY
-    model "llama3-70b-8192"
+    model "llama-3.1-8b-instant"
   }
 }
 

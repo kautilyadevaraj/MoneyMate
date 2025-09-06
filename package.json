@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@boundaryml/baml": "^0.206.1",
+    "@boundaryml/baml-nextjs-plugin": "^0.1.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "6.15.0",
     "@radix-ui/react-avatar": "^1.1.10",

@@ -24,18 +24,22 @@ function ExtractTransactions(transaction: string) -> Transaction[] {
 
     If the input is not a PDF, return:
 
-    {
-      "error": "Unsupported file type. Only PDF is allowed."
-    }
+    [
+      {
+        "error": "Unsupported file type. Only PDF is allowed."
+      }
+    ]
 
 
     Validate PDF contents:
 
     If the PDF does not contain transactions, return:
 
-    {
-      "error": "Invalid file. No transactions found."
-    }
+    [
+      {
+        "error": "Invalid file. No transactions found."
+      }
+    ]
 
 
     If valid, extract for each transaction:
