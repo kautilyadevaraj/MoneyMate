@@ -1,77 +1,74 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { LlamaParseReader } from "llama-cloud-services";
+import { promises as fs } from "fs";
+import path from "path";
+import os from "os";
 
-export async function POST(request: NextRequest) {
+import { b } from "../../../../baml_client";
+
+export async function POST(req: Request) {
   try {
-    const { data, fileContent } = await request.json();
+    
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+    if (!file) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
 
-    const mockTransactions = [
-      {
-        date: "2024-01-15",
-        description: "Grocery Shopping - Big Bazaar",
-        amount: 2450,
-        category: "Groceries",
-        account: "SBI Account",
-        type: "EXPENSE",
-      },
-      {
-        date: "2024-01-14",
-        description: "Fuel - Indian Oil Petrol Pump",
-        amount: 3200,
-        category: "Transportation",
-        account: "SBI Account",
-        type: "EXPENSE",
-      },
-      {
-        date: "2024-01-13",
-        description: "Monthly Salary Credit",
-        amount: 75000,
-        category: "Income",
-        account: "SBI Account",
-        type: "INCOME",
-      },
-      {
-        date: "2024-01-12",
-        description: "Dinner - Dominos Pizza",
-        amount: 850,
-        category: "Food & Dining",
-        account: "HDFC Credit Card",
-        type: "EXPENSE",
-      },
-      {
-        date: "2024-01-11",
-        description: "Movie Tickets - PVR Cinemas",
-        amount: 600,
-        category: "Entertainment",
-        account: "HDFC Credit Card",
-        type: "EXPENSE",
-      },
-      {
-        date: "2024-01-10",
-        description: "Medical Consultation - Apollo Hospital",
-        amount: 1200,
-        category: "Healthcare",
-        account: "SBI Account",
-        type: "EXPENSE",
-      },
-      {
-        date: "2024-01-09",
-        description: "Online Shopping - Amazon",
-        amount: 3500,
-        category: "Shopping",
-        account: "HDFC Credit Card",
-        type: "EXPENSE",
-      },
-    ];
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Save uploaded file temporarily
+    const tempDir = os.tmpdir();
+    const tempPath = path.join(tempDir, `${Date.now()}-${file.name}`);
+    await fs.writeFile(tempPath, buffer);
+
+    // Parse using LlamaParse
+    const reader = new LlamaParseReader({
+      apiKey: process.env.LLAMA_CLOUD_API_KEY!,
+      resultType: "markdown",
+    });
+
+    const documents = await reader.loadData(tempPath);
+
+    // Cleanup temp file
+    await fs.unlink(tempPath);
+
+    // Combine all document text
+    const markdown = documents.map((d) => d.text).join("\n\n");
+    
+    // //console.log("About to classify markdown:", markdown.substring(0, 200) + "...");
+    // console.log("Available BAML functions:", Object.keys(b));
+
+    // // Extract receipt data using BAML
+    // console.log("About to call ExtractTransactions with markdown length:", markdown.length);
+    // console.log("Markdown preview:", markdown.substring(0, 200) + "...");
+    
+    const TransactionData = await b.ExtractTransactions(markdown);
+    
+    console.log("Transaction extraction result:", TransactionData);
+    console.log("Transaction data type:", typeof TransactionData);
+    console.log("Is array:", Array.isArray(TransactionData));
+
+    // Check if the extraction returned an error
+    if (Array.isArray(TransactionData) && TransactionData.length > 0 && 'error' in TransactionData[0]) {
+      console.log("BAML extraction error:", TransactionData[0].error);
+      return NextResponse.json({
+        success: false,
+        error: TransactionData[0].error,
+        transactions: TransactionData
+      }, { status: 400 });
+    }
 
     return NextResponse.json({
       success: true,
-      transactions: mockTransactions,
-      message: `📊 **File Processed Successfully!**\n\nI've analyzed your uploaded file and found **${mockTransactions.length} transactions**. Please review the details below and confirm if everything looks accurate.`,
+      transactions: TransactionData,
     });
-  } catch (error) {
-    console.error("Error processing bulk upload:", error);
+
+  } catch (err: any) {
+    console.error("Error processing document:", err);
     return NextResponse.json(
-      { error: "Failed to process bulk upload" },
+      { error: err.message || "Failed to process document" }, 
       { status: 500 }
     );
   }
