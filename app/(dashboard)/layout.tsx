@@ -1,21 +1,9 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Suspense } from "react";
 import "../globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "AI Financial Assistant",
@@ -29,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <div className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
+      <div>
         <Suspense fallback={null}>
 
             <SidebarProvider>

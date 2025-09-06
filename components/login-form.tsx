@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signUpWithGoogle } from "@/utils/supabase/actions"
+import loginImage from "@/public/login_image.jpeg"
+import Image from "next/image"
 
 export function LoginForm({
   className,
@@ -93,8 +95,8 @@ export function LoginForm({
             </div>
           </form>
           <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
+            <Image
+              src={loginImage}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />

@@ -1,19 +1,13 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Suspense } from "react";
 import "./globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { createClient } from "@/utils/supabase/client";
+import { redirect } from "next/navigation";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -28,21 +22,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createClient();
+
+  supabase.auth.getUser().then(({ data }) => {
+    if (!data)
+      redirect('/login');
+  });
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
-
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-
-              {children}
-
-          </ThemeProvider>
-
+      <body
+        className={`font-sans ${montserrat.variable} ${montserrat.variable}`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

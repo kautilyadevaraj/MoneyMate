@@ -47,7 +47,7 @@ export default function TransactionsPage() {
             <AddTransactionDialog>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Transaction
+                Add Transaction(s)
               </Button>
             </AddTransactionDialog>
           </div>
