@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// 1. Set up the datasource for Supabase (PostgreSQL)
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Make sure to set this in your .env file
+  directUrl = env("DIRECT_URL")   // For connection pooling (e.g., Prisma Accelerate/Data Proxy)
+}
+
+// 2. Set up the Prisma Client generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 3. Define Enum types for better data integrity
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// 4. Define your data models based on the provided tables
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  phone       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Account {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  name         String
+  bankName     String   @map("bank_name")
+  accountType  String   @map("account_type")
+  balance      Float    // Prisma maps REAL to Float
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("accounts")
+}
+
+model Category {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  name          String
+  categoryType  TransactionType @map("category_type")
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @map("user_id")
+  accountId        Int      @map("account_id")
+  categoryId       Int?     @map("category_id")
+  amount           Float
+  transactionType  TransactionType @map("transaction_type")
+  description      String?
+  referenceId      String?  @map("reference_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account          Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category         Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
