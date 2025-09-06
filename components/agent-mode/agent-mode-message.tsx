@@ -1,8 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,11 +33,12 @@ interface AgentModeMessageProps {
   onConfirmAction: (messageId: string, confirmed: boolean) => void;
 }
 
+
 export function AgentModeMessage({
   message,
   onConfirmAction,
 }: AgentModeMessageProps) {
-  
+  console.log(message);
   return (
     <div
       className={cn(
@@ -72,6 +72,74 @@ export function AgentModeMessage({
             <div className="whitespace-pre-wrap text-sm leading-relaxed">
               {message.content}
             </div>
+
+            {(message.metadata?.intent === "add_transaction" ||
+              message.metadata?.intent === "transaction_success") &&
+              message.metadata.data && (
+                <Table className="mt-3">
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-medium py-2">Amount</TableHead>
+                      <TableHead className="font-medium py-2">
+                        Description
+                      </TableHead>
+                      <TableHead className="font-medium py-2">
+                        Category
+                      </TableHead>
+                      <TableHead className="font-medium py-2">
+                        Account
+                      </TableHead>
+                      <TableHead className="font-medium py-2">Type</TableHead>
+                      <TableHead className="font-medium py-2">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow className="hover:bg-muted/20 transition-colors">
+                      <TableCell className="py-2">
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            message.metadata.data.transactionType === "EXPENSE"
+                              ? "text-red-600"
+                              : "text-green-600"
+                          )}
+                        >
+                          {message.metadata.data.transactionType === "EXPENSE"
+                            ? "-"
+                            : "+"}
+                          ₹{message.metadata.data.amount}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {message.metadata.data.description}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Badge variant="outline" className="text-xs">
+                          {message.metadata.data.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {message.metadata.data.account}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Badge
+                          variant={
+                            message.metadata.data.transactionType === "EXPENSE"
+                              ? "destructive"
+                              : "default"
+                          }
+                          className="text-xs"
+                        >
+                          {message.metadata.data.transactionType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2 font-mono text-xs">
+                        {message.metadata.data.date}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
 
             {message.metadata?.intent === "bulk_upload" &&
               message.metadata.data && (

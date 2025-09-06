@@ -26,7 +26,7 @@ interface AgentModeProps {
   onClose: () => void;
 }
 
-export function AgentMode({ isOpen, onClose}: AgentModeProps) {
+export function AgentMode({ isOpen, onClose }: AgentModeProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -56,8 +56,6 @@ export function AgentMode({ isOpen, onClose}: AgentModeProps) {
     }
   }, [messages, isLoading]);
 
-  // agent-mode.tsx
-
   const handleSendMessage = async () => {
     if (!input.trim() && !uploadedFile) return;
 
@@ -73,15 +71,11 @@ export function AgentMode({ isOpen, onClose}: AgentModeProps) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Read the file content if a file is present
     let fileContent: string | null = null;
     if (uploadedFile) {
-      // This reads the file as plain text. Good for .csv, .txt.
-      // For binary files like .xlsx, you'd need a more advanced client-side library to parse.
       fileContent = await uploadedFile.text();
     }
 
-    // Define handler for bulk upload to pass file content
     const handleBulkUpload = async (data: any) => {
       if (!fileContent) {
         console.error("Attempted bulk upload without file content.");
@@ -100,7 +94,7 @@ export function AgentMode({ isOpen, onClose}: AgentModeProps) {
         const response = await fetch("/api/agent/bulk-upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileContent }), // Send the actual file content
+          body: JSON.stringify({ fileContent }),
         });
 
         const result = await response.json();
@@ -123,7 +117,6 @@ export function AgentMode({ isOpen, onClose}: AgentModeProps) {
     };
 
     try {
-      // First, detect the intent
       const response = await fetch("/api/agent/detect-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,9 +129,7 @@ export function AgentMode({ isOpen, onClose}: AgentModeProps) {
 
       const result = await response.json();
 
-      // Route to the correct handler based on Gemini's response
       if (result.intent === "add_transaction") {
-        // The `add-transaction` API uses the original message text for extraction
         await handleAddTransaction(result.data);
       } else if (result.intent === "bulk_upload") {
         await handleBulkUpload(result.data);
@@ -179,7 +170,7 @@ I can help you track your current transactions to free up money for investing. W
         };
         setMessages((prev) => [...prev, botMessage]);
       } else if (result.intent === "general_query") {
-        const botResponse = result.response; // Use the enhanced response from detect-intent
+        const botResponse = result.response;
 
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -189,15 +180,13 @@ I can help you track your current transactions to free up money for investing. W
         };
         setMessages((prev) => [...prev, botMessage]);
       } else {
-        // Handle other intents like general queries or upcoming features
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
+        const successMessage: Message = {
+          id: Date.now().toString(),
           type: "bot",
-          content:
-            result.response || "I understand. This feature is coming soon!",
+          content: result.message,
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, botMessage]);
+        setMessages((prev) => [...prev, successMessage]);
       }
     } catch (error) {
       console.error("Error processing message:", error);
@@ -211,7 +200,6 @@ I can help you track your current transactions to free up money for investing. W
       setMessages((prev) => [...prev, errorMessage]);
     }
 
-    // Reset state after processing
     setInput("");
     setUploadedFile(null);
     setIsLoading(false);
@@ -255,8 +243,12 @@ Would you like me to save this transaction?`,
         const successMessage: Message = {
           id: Date.now().toString(),
           type: "bot",
-          content: `✅ Transaction added successfully!\n\n**Amount:** ₹${result.transaction.amount}\n**Description:** ${result.transaction.description}\n**Category:** ${result.transaction.category}`,
+          content: "The following transaction has been added successfully!",
           timestamp: new Date(),
+          metadata: {
+            intent: "transaction_success",
+            data: result.transaction,
+          },
         };
         setMessages((prev) => [...prev, successMessage]);
       }
