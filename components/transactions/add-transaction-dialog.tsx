@@ -48,12 +48,52 @@ export function AddTransactionDialog({ children }: AddTransactionDialogProps) {
     setOpen(false);
   };
 
-  const handleReceiptSubmit = () => {
-    if (selectedFile) {
-      // Mock implementation - would normally process receipt
-      console.log("[v0] Receipt uploaded:", selectedFile.name);
-      setOpen(false);
-      setSelectedFile(null);
+  const handleReceiptSubmit = async () => {
+    if (!selectedFile) return;
+
+    try {
+      // Step 1: Upload file to bulk-upload endpoint
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const uploadResponse = await fetch('/api/agent/bulk-upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResult.success) {
+        console.error('Upload failed:', uploadResult.error);
+        // Handle error - could show toast notification
+        return;
+      }
+
+      // Step 2: Confirm and save transactions
+      const confirmResponse = await fetch('/api/agent/confirm-bulk-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactions: uploadResult.transactions,
+        }),
+      });
+
+      const confirmResult = await confirmResponse.json();
+
+      if (confirmResult.success) {
+        console.log('Transactions saved successfully:', confirmResult);
+        // Handle success - could show success notification
+        setOpen(false);
+        setSelectedFile(null);
+      } else {
+        console.error('Save failed:', confirmResult.error);
+        // Handle error - could show toast notification
+      }
+    } catch (error) {
+      console.error('Error processing receipt:', error);
+      // Handle error - could show toast notification
     }
   };
 
@@ -174,9 +214,9 @@ export function AddTransactionDialog({ children }: AddTransactionDialogProps) {
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                 <Receipt className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <div className="space-y-2">
-                  <h3 className="font-medium">Upload Receipt</h3>
+                  <h3 className="font-medium">Upload Transactions</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload an image of your receipt and we'll extract the
+                    Upload an image of your Transactions and we'll extract the
                     transaction details automatically
                   </p>
                 </div>
@@ -216,7 +256,7 @@ export function AddTransactionDialog({ children }: AddTransactionDialogProps) {
                   Cancel
                 </Button>
                 <Button onClick={handleReceiptSubmit} disabled={!selectedFile}>
-                  Process Receipt
+                  Process Transactions
                 </Button>
               </DialogFooter>
             </div>
