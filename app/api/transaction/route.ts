@@ -1,10 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { createClient } from "@/utils/supabase/server";
 
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "all";
@@ -18,6 +29,9 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
+      user: {
+        email: user.email,
+      },
       createdAt: {
         gte: dateFilter,
       },

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Bot, User, Check, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CompanyAnalysisCharts } from "../company-analysis-charts";
 
 interface Message {
   id: string;
@@ -33,12 +34,10 @@ interface AgentModeMessageProps {
   onConfirmAction: (messageId: string, confirmed: boolean) => void;
 }
 
-
 export function AgentModeMessage({
   message,
   onConfirmAction,
 }: AgentModeMessageProps) {
-  console.log(message);
   return (
     <div
       className={cn(
@@ -72,6 +71,16 @@ export function AgentModeMessage({
             <div className="whitespace-pre-wrap text-sm leading-relaxed">
               {message.content}
             </div>
+
+            {message.metadata?.intent === "company_analysis" &&
+              message.metadata.data && (
+                <div className="mt-4">
+                  <CompanyAnalysisCharts
+                    ticker={message.metadata.data.ticker}
+                    data={message.metadata.data.analysisData}
+                  />
+                </div>
+              )}
 
             {(message.metadata?.intent === "add_transaction" ||
               message.metadata?.intent === "transaction_success") &&

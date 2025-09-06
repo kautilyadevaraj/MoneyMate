@@ -116,6 +116,55 @@ export function AgentMode({ isOpen, onClose }: AgentModeProps) {
       }
     };
 
+    const handleCompanyAnalysis = async (data: any) => {
+      try {
+        const response = await fetch("/api/agent/company-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker: data.ticker }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const analysisMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: result.message,
+            timestamp: new Date(),
+            metadata: {
+              intent: "company_analysis",
+              data: {
+                ticker: result.ticker,
+                analysisData: result.data,
+              },
+            },
+          };
+          setMessages((prev) => [...prev, analysisMessage]);
+        } else {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content:
+              result.message ||
+              "Failed to analyze company. Please check the ticker symbol and try again.",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        }
+      } catch (error) {
+        console.error("Error analyzing company:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content:
+            "I encountered an error while analyzing the company. Please try again later.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    };
+
     try {
       const response = await fetch("/api/agent/detect-intent", {
         method: "POST",
@@ -133,6 +182,8 @@ export function AgentMode({ isOpen, onClose }: AgentModeProps) {
         await handleAddTransaction(result.data);
       } else if (result.intent === "bulk_upload") {
         await handleBulkUpload(result.data);
+      } else if (result.intent === "company_analysis") {
+        await handleCompanyAnalysis(result.data);
       } else if (result.intent === "budget_management") {
         const botResponse = `🎯 **Budget Management**
 
@@ -243,7 +294,7 @@ Would you like me to save this transaction?`,
         const successMessage: Message = {
           id: Date.now().toString(),
           type: "bot",
-          content: "The following transaction has been added successfully!",
+          content: "Transaction Added Successfully!",
           timestamp: new Date(),
           metadata: {
             intent: "transaction_success",

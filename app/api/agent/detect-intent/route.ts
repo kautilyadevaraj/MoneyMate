@@ -21,13 +21,18 @@ Available intents:
 2. "bulk_upload" - User wants to upload multiple transactions from a file (CSV, Excel, bank statement)
 3. "budget_management" - User asks about budgets, spending limits, budget planning
 4. "investment_query" - User asks about investments, portfolio, stocks, mutual funds
-5. "general_query" - General conversation, greetings, or other financial questions
+5. "company_analysis" - User wants to analyze a company's financial performance (mentions company name, ticker symbol, stock analysis, financial performance, etc.)
+6. "general_query" - General conversation, greetings, or other financial questions
 
 If it's add_transaction, also extract:
 - Amount (number only, no currency symbols)
 - Category (Food & Dining, Transportation, Entertainment, Shopping, Groceries, Healthcare, Bills & Utilities, Others)
 - Account type (SBI, HDFC, ICICI, AXIS, KOTAK, Cash, Credit Card, or Unknown)
 - Description (clean version of what they spent on)
+
+If it's company_analysis, also extract:
+- Company ticker symbol (e.g., AAPL, GOOGL, MSFT) or company name
+- Analysis type (financial performance, cash flow, profitability, etc.)
 
 IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or markdown formatting.
 
@@ -41,7 +46,9 @@ IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or ma
     "account": "account" (only for add_transaction),
     "description": "description" (only for add_transaction),
     "type": "EXPENSE" (only for add_transaction),
-    "fileName": "filename" (only for bulk_upload)
+    "fileName": "filename" (only for bulk_upload),
+    "ticker": "ticker_symbol" (only for company_analysis),
+    "companyName": "company_name" (only for company_analysis)
   }
 }
 `;
@@ -76,7 +83,7 @@ IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or ma
 
       let fallbackIntent = "general_query";
       let fallbackResponse =
-        "I'm here to help with your finances! I can help you add transactions, manage budgets, and answer financial questions. What would you like to do?";
+        "I'm here to help with your finances! I can help you add transactions, manage budgets, analyze companies, and answer financial questions. What would you like to do?";
 
       const lowerMessage = message.toLowerCase();
 
@@ -115,6 +122,17 @@ IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or ma
         fallbackIntent = "investment_query";
         fallbackResponse =
           "I can help you with investment-related questions. What would you like to know about your investments?";
+      } else if (
+        lowerMessage.includes("analyze") ||
+        lowerMessage.includes("analysis") ||
+        lowerMessage.includes("company") ||
+        lowerMessage.includes("stock") ||
+        lowerMessage.includes("financial performance") ||
+        /[A-Z]{2,5}/.test(message) // Detect potential ticker symbols
+      ) {
+        fallbackIntent = "company_analysis";
+        fallbackResponse =
+          "I can help you analyze a company's financial performance. Please provide the company ticker symbol (e.g., AAPL, GOOGL) for detailed analysis.";
       }
 
       return NextResponse.json({
