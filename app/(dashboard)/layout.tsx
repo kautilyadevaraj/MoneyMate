@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Suspense } from "react";
-import "./globals.css";
+import "../globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
@@ -29,21 +29,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
+      <div className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
+        <Suspense fallback={null}>
 
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-
+            <SidebarProvider>
+              <AppSidebar />
               {children}
+            </SidebarProvider>
 
-          </ThemeProvider>
-
-      </body>
-    </html>
+        </Suspense>
+      </div>
   );
 }
