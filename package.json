@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@boundaryml/baml": "^0.206.1",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "6.15.0",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -23,6 +24,7 @@
     "@supabase/ssr": "^0.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "llama-cloud-services": "^0.3.4",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "next-themes": "^0.4.6",
