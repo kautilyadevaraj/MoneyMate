@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,122 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Search, Filter, X } from "lucide-react";
+import { Download, Search, Filter, X, Loader2 } from "lucide-react";
 
-const transactions = [
-  {
-    date: "2025-08-01",
-    description: "UPI - MERCHANT 1",
-    category: "Food & Dining",
-    amount: -500,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-02",
-    description: "UPI - MERCHANT 2",
-    category: "Food & Dining",
-    amount: -573,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-03",
-    description: "Salary Credit",
-    category: "Income",
-    amount: 85000,
-    account: "ICICI",
-  },
-  {
-    date: "2025-08-04",
-    description: "UPI - GROCERY STORE",
-    category: "Groceries",
-    amount: -2340,
-    account: "SBI",
-  },
-  {
-    date: "2025-08-05",
-    description: "UPI - FUEL STATION",
-    category: "Transportation",
-    amount: -1200,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-06",
-    description: "Investment SIP",
-    category: "Investment",
-    amount: -15000,
-    account: "ICICI",
-  },
-  {
-    date: "2025-08-07",
-    description: "UPI - COFFEE SHOP",
-    category: "Food & Dining",
-    amount: -250,
-    account: "SBI",
-  },
-  {
-    date: "2025-08-08",
-    description: "Online Shopping",
-    category: "Shopping",
-    amount: -3500,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-09",
-    description: "Electricity Bill",
-    category: "Bills & Utilities",
-    amount: -1800,
-    account: "ICICI",
-  },
-  {
-    date: "2025-08-10",
-    description: "Freelance Payment",
-    category: "Income",
-    amount: 25000,
-    account: "SBI",
-  },
-  {
-    date: "2025-08-05",
-    description: "UPI - FUEL STATION",
-    category: "Transportation",
-    amount: -1200,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-06",
-    description: "Investment SIP",
-    category: "Investment",
-    amount: -15000,
-    account: "ICICI",
-  },
-  {
-    date: "2025-08-07",
-    description: "UPI - COFFEE SHOP",
-    category: "Food & Dining",
-    amount: -250,
-    account: "SBI",
-  },
-  {
-    date: "2025-08-08",
-    description: "Online Shopping",
-    category: "Shopping",
-    amount: -3500,
-    account: "HDFC",
-  },
-  {
-    date: "2025-08-09",
-    description: "Electricity Bill",
-    category: "Bills & Utilities",
-    amount: -1800,
-    account: "ICICI",
-  },
-  {
-    date: "2025-08-10",
-    description: "Freelance Payment",
-    category: "Income",
-    amount: 25000,
-    account: "SBI",
-  },
-];
+interface Transaction {
+  id: number;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  account: string;
+  referenceId?: string;
+}
+
+interface FilterOptions {
+  categories: string[];
+  accounts: string[];
+}
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("en-IN", {
@@ -159,28 +59,60 @@ interface TransactionsTableProps {
 export function TransactionsTable({
   showFilters = false,
 }: TransactionsTableProps) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    categories: [],
+    accounts: [],
+  });
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [accountFilter, setAccountFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState(30);
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      transaction.description
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "all" || transaction.category === categoryFilter;
-    const matchesAccount =
-      accountFilter === "all" || transaction.account === accountFilter;
-    const matchesAmount =
-      amountFilter === "all" ||
-      (amountFilter === "income" && transaction.amount > 0) ||
-      (amountFilter === "expense" && transaction.amount < 0);
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        search: searchTerm,
+        category: categoryFilter,
+        account: accountFilter,
+        type: amountFilter,
+        days: dateFilter.toString(),
+      });
 
-    return matchesSearch && matchesCategory && matchesAccount && matchesAmount;
-  });
+      const response = await fetch(`/api/transaction?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch transactions");
+
+      const data = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch("/api/transaction/filters");
+      if (!response.ok) throw new Error("Failed to fetch filter options");
+
+      const data = await response.json();
+      setFilterOptions(data);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [searchTerm, categoryFilter, accountFilter, amountFilter, dateFilter]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -195,6 +127,38 @@ export function TransactionsTable({
     accountFilter !== "all" ||
     amountFilter !== "all";
 
+  const exportToCSV = () => {
+    const headers = [
+      "Date",
+      "Description",
+      "Category",
+      "Amount",
+      "Account",
+      "Reference ID",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...transactions.map((t) =>
+        [
+          t.date,
+          `"${t.description}"`,
+          t.category,
+          t.amount,
+          t.account,
+          t.referenceId || "",
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
@@ -208,19 +172,27 @@ export function TransactionsTable({
                   size="sm"
                   className="text-xs sm:text-sm bg-transparent"
                 >
-                  Last 30 days
+                  Last {dateFilter} days
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Last 7 days</DropdownMenuItem>
-                <DropdownMenuItem>Last 30 days</DropdownMenuItem>
-                <DropdownMenuItem>Last 90 days</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFilter(7)}>
+                  Last 7 days
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFilter(30)}>
+                  Last 30 days
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFilter(90)}>
+                  Last 90 days
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
               variant="outline"
               size="sm"
               className="text-xs sm:text-sm bg-transparent"
+              onClick={exportToCSV}
+              disabled={transactions.length === 0}
             >
               <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Export CSV</span>
@@ -252,17 +224,11 @@ export function TransactionsTable({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="Food & Dining">Food & Dining</SelectItem>
-                    <SelectItem value="Groceries">Groceries</SelectItem>
-                    <SelectItem value="Transportation">
-                      Transportation
-                    </SelectItem>
-                    <SelectItem value="Shopping">Shopping</SelectItem>
-                    <SelectItem value="Bills & Utilities">
-                      Bills & Utilities
-                    </SelectItem>
-                    <SelectItem value="Investment">Investment</SelectItem>
-                    <SelectItem value="Income">Income</SelectItem>
+                    {filterOptions.categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -272,9 +238,11 @@ export function TransactionsTable({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Accounts</SelectItem>
-                    <SelectItem value="HDFC">HDFC</SelectItem>
-                    <SelectItem value="ICICI">ICICI</SelectItem>
-                    <SelectItem value="SBI">SBI</SelectItem>
+                    {filterOptions.accounts.map((account) => (
+                      <SelectItem key={account} value={account}>
+                        {account}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -313,16 +281,23 @@ export function TransactionsTable({
                 <TableHead className="min-w-[100px]">Date</TableHead>
                 <TableHead className="min-w-[200px]">Description</TableHead>
                 <TableHead className="min-w-[120px]">Category</TableHead>
-                <TableHead className="min-w-[100px]">
-                  Amount
-                </TableHead>
+                <TableHead className="min-w-[100px]">Amount</TableHead>
                 <TableHead className="min-w-[80px]">Account</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction, index) => (
-                  <TableRow key={index}>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                    <p className="text-muted-foreground mt-2">
+                      Loading transactions...
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : transactions.length > 0 ? (
+                transactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
                     <TableCell className="font-medium">
                       {transaction.date}
                     </TableCell>
