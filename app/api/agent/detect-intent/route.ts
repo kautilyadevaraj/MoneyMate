@@ -22,7 +22,8 @@ Available intents:
 3. "budget_management" - User asks about budgets, spending limits, budget planning
 4. "investment_query" - User asks about investments, portfolio, stocks, mutual funds
 5. "company_analysis" - User wants to analyze a company's financial performance (mentions company name, ticker symbol, stock analysis, financial performance, etc.)
-6. "general_query" - General conversation, greetings, or other financial questions
+6. "stock_prediction" - User wants to see stock price predictions, future performance, price forecasts, or real-time stock data (mentions "predict", "forecast", "future price", "stock chart", "price movement", etc.)
+7. "general_query" - General conversation, greetings, or other financial questions
 
 If it's add_transaction, also extract:
 - Amount (number only, no currency symbols)
@@ -33,6 +34,10 @@ If it's add_transaction, also extract:
 If it's company_analysis, also extract:
 - Company ticker symbol (e.g., AAPL, GOOGL, MSFT) or company name
 - Analysis type (financial performance, cash flow, profitability, etc.)
+
+If it's stock_prediction, also extract:
+- Company ticker symbol (e.g., AAPL, GOOGL, MSFT) or company name
+- Time window (1D, 5D, 1M, 3M, 6M, 1Y, 5Y)
 
 IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or markdown formatting.
 
@@ -47,8 +52,9 @@ IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or ma
     "description": "description" (only for add_transaction),
     "type": "EXPENSE" (only for add_transaction),
     "fileName": "filename" (only for bulk_upload),
-    "ticker": "ticker_symbol" (only for company_analysis),
-    "companyName": "company_name" (only for company_analysis)
+    "ticker": "ticker_symbol" (only for company_analysis or stock_prediction),
+    "companyName": "company_name" (only for company_analysis or stock_prediction),
+    "timeWindow": "time_window" (only for stock_prediction)
   }
 }
 `;
@@ -133,6 +139,18 @@ IMPORTANT: Respond ONLY with valid JSON. No additional text, explanations, or ma
         fallbackIntent = "company_analysis";
         fallbackResponse =
           "I can help you analyze a company's financial performance. Please provide the company ticker symbol (e.g., AAPL, GOOGL) for detailed analysis.";
+      } else if (
+        lowerMessage.includes("predict") ||
+        lowerMessage.includes("forecast") ||
+        lowerMessage.includes("future") ||
+        lowerMessage.includes("price chart") ||
+        lowerMessage.includes("stock chart") ||
+        lowerMessage.includes("price movement") ||
+        lowerMessage.includes("real-time")
+      ) {
+        fallbackIntent = "stock_prediction";
+        fallbackResponse =
+          "I can show you real-time stock price data and trends. Please provide the company ticker symbol (e.g., AAPL, GOOGL) to see the price chart.";
       }
 
       return NextResponse.json({

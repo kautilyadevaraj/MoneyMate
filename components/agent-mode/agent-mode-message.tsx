@@ -15,6 +15,7 @@ import {
 import { Bot, User, Check, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CompanyAnalysisCharts } from "../company-analysis-charts";
+import { StockPriceChart } from "../stock-price-chart";
 
 interface Message {
   id: string;
@@ -78,6 +79,18 @@ export function AgentModeMessage({
                   <CompanyAnalysisCharts
                     ticker={message.metadata.data.ticker}
                     data={message.metadata.data.analysisData}
+                  />
+                </div>
+              )}
+
+            {message.metadata?.intent === "stock_prediction" &&
+              message.metadata.data && (
+                <div className="mt-4">
+                  <StockPriceChart
+                    data={message.metadata.data.stockData.chartData}
+                    summary={message.metadata.data.stockData.summary}
+                    ticker={message.metadata.data.ticker}
+                    timeWindow={message.metadata.data.stockData.timeWindow}
                   />
                 </div>
               )}

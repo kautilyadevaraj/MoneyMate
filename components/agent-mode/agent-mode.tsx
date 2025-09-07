@@ -165,6 +165,58 @@ export function AgentMode({ isOpen, onClose }: AgentModeProps) {
       }
     };
 
+    const handleStockPrediction = async (data: any) => {
+      try {
+        const response = await fetch("/api/agent/stock-prediction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticker: data.ticker,
+            timeWindow: data.timeWindow || "1D",
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const stockMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: `Here's the real-time stock data for ${result.data.summary.title}:`,
+            timestamp: new Date(),
+            metadata: {
+              intent: "stock_prediction",
+              data: {
+                ticker: result.data.ticker,
+                stockData: result.data,
+              },
+            },
+          };
+          setMessages((prev) => [...prev, stockMessage]);
+        } else {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content:
+              result.error ||
+              "Failed to fetch stock data. Please check the ticker symbol and try again.",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        }
+      } catch (error) {
+        console.error("Error fetching stock data:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content:
+            "I encountered an error while fetching stock data. Please try again later.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    };
+
     try {
       const response = await fetch("/api/agent/detect-intent", {
         method: "POST",
@@ -184,6 +236,8 @@ export function AgentMode({ isOpen, onClose }: AgentModeProps) {
         await handleBulkUpload(result.data);
       } else if (result.intent === "company_analysis") {
         await handleCompanyAnalysis(result.data);
+      } else if (result.intent === "stock_prediction") {
+        await handleStockPrediction(result.data);
       } else if (result.intent === "budget_management") {
         const botResponse = `🎯 **Budget Management**
 
@@ -294,7 +348,7 @@ Would you like me to save this transaction?`,
         const successMessage: Message = {
           id: Date.now().toString(),
           type: "bot",
-          content: "Transaction Added Successfully!",
+          content: "✅ Transaction Added Successfully!",
           timestamp: new Date(),
           metadata: {
             intent: "transaction_success",

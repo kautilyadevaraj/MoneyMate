@@ -8,12 +8,24 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
-      data: { user },
+      data: { session },
       error: authError,
-    } = await supabase.auth.getUser();
+      } = await supabase.auth.getSession();
+      
+      console.log(session)
 
-    if (authError || !user) {
+    if (authError || !session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -29,9 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
-      user: {
-        email: user.email,
-      },
+      userId: dbUser.id,
       createdAt: {
         gte: dateFilter,
       },

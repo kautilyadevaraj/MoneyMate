@@ -38,13 +38,9 @@ import {
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", url: "/" },
   { icon: CreditCard, label: "Transactions", url: "/transactions" },
-  { icon: TrendingUp, label: "Investments", url: "/investments" },
   { icon: PiggyBank, label: "Budgets", url: "/budgets" },
   { icon: BarChart3, label: "Insights", url: "/insights" },
-  { icon: FileText, label: "Documents", url: "/documents" },
-  { icon: Shield, label: "Compliance", url: "/compliance" },
   { icon: Bot, label: "AI Chat", url: "/agent" },
-  { icon: Settings, label: "Settings", url: "/settings" },
 ];
 
 const quickLinks = [
